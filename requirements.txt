@@ -1,6 +1,4 @@
-fastapi>=0.108.0
-uvicorn>=0.25.0
-gunicorn>=20.1.0
+fastapi[all]
 pydantic
 watchfiles
 langsmith==0.1.93
@@ -8,6 +6,7 @@ langchain==0.2.14
 mongoengine
 langchain-community
 pytest
+pytest-asyncio
 langchain-groq
 pytest-dotenv
 sentry-sdk[fastapi]
@@ -24,3 +23,9 @@ boto3
 lxml
 reportlab
 Pillow
+python-dotenv
+pyppeteer
+sentence_transformers
+supabase
+vecs
+pytest-cov
