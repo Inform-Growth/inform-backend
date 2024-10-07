@@ -51,7 +51,6 @@ RUN set -eux; \
         libxcomposite1 \
         libxdamage1 \
         libxrandr2 \
-        libgbm1 \
         xdg-utils \
         chromium; \
     \

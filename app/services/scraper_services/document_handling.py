@@ -17,15 +17,15 @@ class DocumentHandler:
         browser = None
         try:
             # Launch a headless browser
-            browser = await launch({
-                'args': [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu',
-                    '--headless',
-                ]
-            })
+            browser = await launch(headless=True, 
+                               executablePath='/usr/bin/chromium',
+                               args=[
+                                '--no-sandbox',
+                                '--disable-setuid-sandbox',
+                                '--disable-dev-shm-usage',   # Helps reduce memory issues in Docker
+                                '--disable-gpu',              # GPU rendering is not supported in headless mode in Docker
+                                '--disable-software-rasterizer'
+                            ])
             page = await browser.newPage()
             
             # Set the page content
