@@ -1,5 +1,7 @@
 import os
 import json
+from datetime import datetime
+
 from app.services.scraper_services.web_requests import WebRequestHandler
 from app.services.scraper_services.url_ranking import URLRanker
 from app.services.scraper_services.ai_data_collection import AIDataCollector
@@ -276,6 +278,11 @@ async def run_scraper(args):
         print("Saving to markdown and converting to PDF")
         print(valid_people)
         print(strategy)
+        
+        # Update filename with timestamp - solves crash!
+        current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
+        filename = filename + current_timestamp
+        
         db.update_sales_scraper_run(run_id=run_id, run_status="Generating PDF")
         await doc_handler.generate_html_and_convert_to_pdf(
             company_summary=company_response,
@@ -287,7 +294,7 @@ async def run_scraper(args):
             company_name=company_response.name,
             mission=company_response.mission
         )
-
+        
         uploader = DigitalOceanSpacesUploader('inform')
         upload = uploader.upload_file(filename + ".pdf")
         s3.upload_file(filename + ".pdf")
@@ -299,7 +306,7 @@ async def run_scraper(args):
         print(args)
         response = {
             "message": "Strategy and report generated successfully", 
-            "url": f"https://inform.sfo2.cdn.digitaloceanspaces.com/{filename}.pdf", 
+            "url": f"https://inform.sfo2.cdn.digitaloceanspaces.com/{filename}.pdf",
             "email": args.get("email"),
             "filename": filename,
             "company": company_response.name,
