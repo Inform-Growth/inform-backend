@@ -222,38 +222,70 @@ class SalesQAAgent:
                 (
                     "system",
                     """
-                    You are a top-tier sales strategist known for creating innovative, highly effective sales strategies. Based on the information provided below, develop a unique and valuable sales strategy that addresses the buyer's specific needs and pain points. Your strategy should follow this exact structure:
+                    As a top-tier sales strategist, create an innovative and highly effective sales strategy tailored to the specific company and industry information provided below.
+                    
+                    Your strategy should address the buyer's unique needs and pain points, following this structure:
 
-                    Market Analysis
-
-                    Industry trends and challenges
-                    Competitive landscape
-                    Target company opportunities
-
-
-                    Personalized Sales Approach
-
-                    Product/service focus and target audience
-                    Value proposition and pain point solutions
-                    Tailored conversation guide (opening, probing, presenting, closing)
-
-
-                    Multi-Channel Strategy
-
-                    Channel integration plan
-                    Technology-enabled personalization
-
-
-                    Implementation Plan
-
-                    Key performance indicators (KPIs)
-                    Timeline with major milestones
-
-
-                    Innovation and Risk Management
-
-                    Unconventional tactics and cutting-edge technology use
-                    Potential challenges and mitigation strategiesle maintaining clarity and focus throughout each section.
+                    1. Market Analysis
+                    
+                       a. Industry trends and challenges
+                          - Key market dynamics and emerging technologies
+                          - Regulatory environment
+                    
+                       b. Competitive landscape
+                          - Major players and their market positions
+                          - Recent significant industry developments
+                    
+                       c. Target company opportunities
+                          - Current market position and potential growth areas
+                    
+                    2. Stakeholder Engagement
+                    
+                       a. Identify the three highest-ranking decision-makers from the provided data.
+                    
+                       b. For each of these three key stakeholders, craft a personalized opener message.
+                       
+                       c. Limit each opener to 2-3 sentences, ensuring it's concise yet impactful.
+                       
+                       Example structure for each opener:
+                       "[Name], [Company]'s [Title], I've identified an opportunity to [brief value proposition] that aligns with [assumed priority based on their role]."
+                    
+                    3. Pain Point Identification
+                    
+                       a. Company-specific challenges
+                          - Operational inefficiencies or market pressures
+                    
+                       b. Industry-wide issues relevant to the company
+                    
+                       c. Stakeholder-specific concerns
+                          - Link to larger company objectives
+                    
+                    4. Solution-Focused Pitch
+                    
+                       a. Customized value proposition
+                          - How your solution addresses identified pain points
+                          - Quantifiable benefits
+                    
+                       b. Implementation roadmap
+                          - Phased approach with quick wins and long-term advantages
+                    
+                       c. Relevant case studies
+                          - Emphasize measurable outcomes and ROI
+                    
+                    5. Objection Handling
+                    
+                       a. Anticipate common objections
+                          - Budget, implementation challenges, change resistance
+                    
+                       b. Prepared responses
+                          - Data-driven counterarguments
+                          - Flexible options or pilot programs
+                    
+                       c. Risk assessment and mitigation strategies
+                    
+                    Develop a highly personalized approach demonstrating deep understanding of the target company's unique position and objectives.
+                    Use specific data points and industry terminology to establish expertise. Present a compelling, tailor-made solution that positions your offering as essential to the company's future success.
+                    
                     """
                 ),
                 (
