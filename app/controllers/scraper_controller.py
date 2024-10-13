@@ -276,24 +276,45 @@ async def run_scraper(args):
 
         # Proceed with saving to markdown, converting to PDF, uploading, etc.
         print("Saving to markdown and converting to PDF")
-        print(valid_people)
-        print(strategy)
+        # print(valid_people)
+        # print(strategy)
         
         # Update filename with timestamp - solves crash!
         current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
         filename = filename + current_timestamp
         
         db.update_sales_scraper_run(run_id=run_id, run_status="Generating PDF")
-        await doc_handler.generate_html_and_convert_to_pdf(
-            company_summary=company_response,
-            strategy=strategy,
-            people=valid_people,
-            appendix_urls=appendix_urls,
-            pdf_filename=filename+".pdf",
-            favicon_url=favicon_url,
-            company_name=company_response.name,
-            mission=company_response.mission
-        )
+        print("Generating PDF")
+        # Add a try-except block to catch and log any exceptions
+        try:
+            pdf_file = await doc_handler.generate_html_and_convert_to_pdf(
+                company_summary=company_response,
+                strategy=strategy,
+                people=valid_people,
+                appendix_urls=appendix_urls,
+                pdf_filename=filename+".pdf",
+                favicon_url=favicon_url,
+                company_name=company_response.name,
+                mission=company_response.mission
+            )
+            
+            # Check if the PDF file was actually created
+            if not os.path.exists(pdf_file):
+                raise FileNotFoundError(f"PDF file {pdf_file} was not created")
+            
+            # Log the successful PDF generation
+            print(f"PDF successfully generated: {pdf_file}")
+            
+            # You can add more checks here, such as file size
+            file_size = os.path.getsize(pdf_file)
+            if file_size == 0:
+                raise ValueError(f"Generated PDF file {pdf_file} is empty")
+            
+            print(f"PDF file size: {file_size} bytes")
+            
+        except Exception as e:
+            print(f"Error in PDF generation: {str(e)}")
+            raise  # Re-raise the exception to be caught by the outer try-except block
         
         uploader = DigitalOceanSpacesUploader('inform')
         upload = uploader.upload_file(filename + ".pdf")
