@@ -6,6 +6,19 @@ ENV PATH /usr/local/bin:$PATH
 ENV LANG C.UTF-8
 ENV GPG_KEY 7169605F62C751356D054A26A821E680E5FA6305
 ENV PYTHON_VERSION 3.12.7
+# Set permissions for the app directory
+ENV APP_HOME /app
+RUN mkdir -p $APP_HOME && \
+    chown -R nobody:nogroup $APP_HOME && \
+    chmod -R 755 $APP_HOME
+
+# Create a directory for temporary PDF storage
+RUN mkdir -p $APP_HOME/tmp && \
+    chown -R nobody:nogroup $APP_HOME/tmp && \
+    chmod -R 777 $APP_HOME/tmp
+
+# Set the working directory
+WORKDIR $APP_HOME
 
 # Install dependencies and Python
 RUN set -eux; \
@@ -112,13 +125,8 @@ RUN set -eux; \
         ln -svT "$src" "/usr/local/bin/$dst"; \
     done
 
-# Set the working directory
-WORKDIR /app
-
-# Copy requirements first to leverage Docker cache
-COPY requirements.txt .
-
 # Install dependencies
+COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade -r requirements.txt
 
 # Copy the rest of the application
