@@ -1,53 +1,26 @@
 # sales_qa_agent.py
-
-import os
 import json
-from typing import List, Optional, Tuple
-from pydantic import BaseModel, ValidationError
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+import os
+from typing import List, Type
+
 import vecs
+from dotenv import load_dotenv
+from langchain.output_parsers import OutputFixingParser
+from langchain_core.output_parsers.pydantic import PydanticOutputParser
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.output_parsers import PydanticOutputParser, OutputFixingParser
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from pydantic import BaseModel, ValidationError
 
+from app.models.scraper_models import CompanyResponse, CheckResponse, SummaryResponse, StrategyResponse, PeopleResponse
 
-from dotenv import load_dotenv
 load_dotenv()
 
-
-class CompanyResponse(BaseModel):
-    """Pydantic model for company response."""
-    name: str
-    description: str
-    mission: str
-
-class Person(BaseModel):
-    """Pydantic model for a person."""
-    name: str
-    title: Optional[str] = None
-    summary: Optional[str] = None
-
-class PeopleResponse(BaseModel):
-    """Pydantic model for people response."""
-    people: List[Person]
-
-class CheckResponse(BaseModel):
-    """Pydantic model for check response."""
-    check: bool
-
-class SummaryResponse(BaseModel):
-    """Pydantic model for summary response."""
-    summary: str
-
-class StrategyResponse(BaseModel):
-    """Pydantic model for strategy response."""
-    strategy: str
 
 class SalesQAAgent:
     def __init__(self, collection_name: str):
         self.collection_name = collection_name
         # Initialize vecs client
-        DB_CONNECTION = os.getenv("SUPABASE_URI")  # PostgreSQL connection string
+        DB_CONNECTION = os.getenv("SUPABASE_URI")  # PostgresSQL connection string
         if not DB_CONNECTION:
             raise ValueError("DB_CONNECTION environment variable is not set.")
         self.client = vecs.Client(DB_CONNECTION)
@@ -63,7 +36,7 @@ class SalesQAAgent:
 
         # Initialize the LLM with function calling capabilities
         self.llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.2)
-    
+
     def collection_exists(self):
         print([x.name for x in self.client.list_collections()])
         return self.collection_name in [x.name for x in self.client.list_collections()]
@@ -107,13 +80,13 @@ class SalesQAAgent:
         # results is a list of dictionaries with keys: 'id', 'score', 'value', 'metadata'
         return results
 
-    def ask_question(self, query: str, response_model: BaseModel, context_docs: List[dict]):
+    def ask_question(self, query: str, response_model: Type[BaseModel], context_docs: List[dict]):
         """Asks the LLM a question and ensures the response matches the Pydantic model."""
         # Create the output parser
         output_parser = PydanticOutputParser(pydantic_object=response_model)
-
+        
         # Create the prompt
-        prompt_template = ChatPromptTemplate.from_messages(
+        prompt_template = ChatPromptTemplate(
             [
                 (
                     "system",
@@ -211,14 +184,13 @@ class SalesQAAgent:
             context_docs=summary_context
         )
         return summary_response, summary_context  # Return context for later use
-    
+
     def generate_strategy(self, company_description: str, sales_company_summary: str, people_info: List[dict]):
         """Generates a sales strategy based on the company information."""
         output_parser = PydanticOutputParser(pydantic_object=StrategyResponse)
 
         # Create the prompt
-        prompt_template = ChatPromptTemplate.from_messages(
-            [
+        prompt_template = ChatPromptTemplate([
                 (
                     "system",
                     """
@@ -291,19 +263,18 @@ class SalesQAAgent:
                 (
                     "human",
                     """My company summary:
-            {company_desc}
+                    {company_desc}
 
-            The company I am selling to: 
-            {sales_company}
-
-            The people I am selling to:
-            {people}
-
-            Please provide a fully structured and cleanly formatted HTML snippet (no head, body, footer tags, etc.) as the summary, ensuring proper use of tags such as `<h2>`, `<p>`, `<ul>`, and `<strong>` where appropriate to enhance readability. Do not use new line characters or markdown syntax in your response.
-            """
+                    The company I am selling to:
+                    {sales_company}
+        
+                    The people I am selling to:
+                    {people}
+        
+                    Please provide a fully structured and cleanly formatted HTML snippet (no head, body, footer tags, etc.) as the summary, ensuring proper use of tags such as `<h2>`, `<p>`, `<ul>`, and `<strong>` where appropriate to enhance readability. Do not use new line characters or markdown syntax in your response.
+                    """
                 ),
-            ]
-        )
+        ])
 
         # Get the format instructions from the output parser
         # format_instructions = output_parser.get_format_instructions()
@@ -312,6 +283,7 @@ class SalesQAAgent:
             sales_company=sales_company_summary,
             people='\n\n'.join([f"{person.name} - {person.title}\n {person.summary}" for person in people_info]),
         )
+        
         # print(prompt)
         # Call the LLM
         response = self.llm.invoke(prompt)

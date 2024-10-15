@@ -1,29 +1,26 @@
 # Scraper Services that are used in this controller. Part of the Scraper Architecture.
-from app.services.scraper_services.web_requests import WebRequestHandler
-from app.services.scraper_services.url_ranking import URLRanker
-from app.services.scraper_services.ai_data_collection import AIDataCollector
-from app.services.scraper_services.document_handling import DocumentHandler
-from app.services.scraper_services.sales_qa_agent import SalesQAAgent
-from app.services.do_spaces_service import DigitalOceanSpacesUploader
-from app.models.scraper_models import CompanySummaryResponse, ContactResponse, Summary, CheckResponse, PageRanked, \
-	SalesScraperRequestBody
-
 # Standard and external imports
 import os
-import json
 from datetime import datetime
-from bs4 import BeautifulSoup, SoupStrainer
-from langchain_community.document_loaders import WebBaseLoader
-from langchain_openai import ChatOpenAI, OpenAIEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter, HTMLSectionSplitter
-from typing_extensions import Annotated, TypedDict
-from typing import List, LiteralString
-from fastapi import HTTPException
+from typing import LiteralString
+from urllib.parse import urlparse
+
 import requests
+from bs4 import SoupStrainer
 from dotenv import load_dotenv
+from fastapi import HTTPException
+from langchain_community.document_loaders.web_base import WebBaseLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 from app.db.s3 import S3Connection
 from app.db.supabase_connection import SupabaseConnection
-from urllib.parse import urlparse
+from app.services.do_spaces_service import DigitalOceanSpacesUploader
+from app.services.scraper_services.document_handling import DocumentHandler
+from app.services.scraper_services.sales_qa_agent import SalesQAAgent
+from app.services.scraper_services.url_ranking import URLRanker
+from app.services.scraper_services.web_requests import WebRequestHandler
+from app.models.scraper_models import CompanySummaryResponse, ContactResponse, Summary, CheckResponse, PageRanked, \
+	SalesScraperRequestBody, Scraper
 
 load_dotenv()
 
@@ -74,7 +71,7 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 	"""
     Async function in charge of running the scraper functionality.
     :param database_run_id: The scraper's database ID.
-    :param request_body: The post-request body that is necessary to obtain the website's url and the description of the
+    :param request_body: The post-request body that is necessary to obtain the website's scraper.request_body.url and the description of the
                          company
     """
 	if database_run_id and request_body:
@@ -90,16 +87,16 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 		print("Error: Neither a database run_id nor a request_body was provided.")
 		return
 	
-	company_description = request_body.company_description
-	url = request_body.url
-	email = request_body.email
-	run_id = database_run_id
+	# TODO: Delete debug comments
+	print("\n\n\n Creating scraper\n\n\n")
+	scraper = Scraper(request_body=request_body, run_id=database_run_id)
+	print("\n\n\n")
 	
 	try:
-		db.update_sales_scraper_run(run_id=run_id, run_status="Started")
+		db.update_sales_scraper_run(run_id=scraper.run_id, run_status="Started")
 		
 		# Initialize the scraper agent
-		filename = get_filename_from_url(url)
+		filename = get_filename_from_url(scraper.request_body.url)
 		agent = SalesQAAgent(collection_name=filename)
 		doc_handler = DocumentHandler()
 		# ai_collector = AIDataCollector()
@@ -113,7 +110,7 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 			agent.collection = agent.client.get_collection(agent.collection_name)
 			# Get favicon_url
 			web_handler = WebRequestHandler()
-			favicon_url = web_handler.get_favicon(url)
+			favicon_url = web_handler.get_favicon(scraper.request_body.url)
 		else:
 			if not agent.collection_exists():
 				# Create a new collection
@@ -127,11 +124,11 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 			web_handler = WebRequestHandler()
 			ranker = URLRanker()
 			
-			print(f"Generating sitemap for {url}")
-			pages_response = web_handler.parse_sitemap(url, url)
+			print(f"Generating sitemap for {scraper.request_body.url}")
+			pages_response = web_handler.parse_sitemap(scraper.request_body.url, scraper.request_body.url)
 			
-			favicon_url = web_handler.get_favicon(url)
-			print(f"Ranking URLs for {url}")
+			favicon_url = web_handler.get_favicon(scraper.request_body.url)
+			print(f"Ranking URLs for {scraper.request_body.url}")
 			
 			if len(pages_response) == 0:
 				raise Exception("Error: No pages found to generate strategy or too many pages in sitemap")
@@ -221,7 +218,7 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 		
 		# End of If-Else
 		# Proceed with the rest of the code using the agent and existing embeddings
-		db.update_sales_scraper_run(run_id=run_id, run_status="Getting People Info")
+		db.update_sales_scraper_run(run_id=scraper.run_id, run_status="Getting People Info")
 		
 		# Initialize appendix URLs list
 		appendix_urls = []
@@ -296,9 +293,9 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 					appendix_urls.append(doc[2]['source'])
 		
 		# Now you can proceed with generating the strategy and saving the report
-		db.update_sales_scraper_run(run_id=run_id, run_status="Generating Strategy")
+		db.update_sales_scraper_run(run_id=scraper.run_id, run_status="Generating Strategy")
 		print("Generating strategy")
-		strategy = agent.generate_strategy(company_description, company_response, valid_people)
+		strategy = agent.generate_strategy(scraper.request_body.company_description, company_response, valid_people)
 		
 		# Proceed with saving to markdown, converting to PDF, uploading, etc.
 		print("Saving to markdown and converting to PDF")
@@ -309,7 +306,7 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 		current_timestamp = datetime.now().strftime("%Y-%m-%d_%H:%M:%S")
 		filename = filename + current_timestamp
 		
-		db.update_sales_scraper_run(run_id=run_id, run_status="Generating PDF")
+		db.update_sales_scraper_run(run_id=scraper.run_id, run_status="Generating PDF")
 		print("Generating PDF")
 		# Add a try-except block to catch and log any exceptions
 		try:
@@ -349,28 +346,28 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 		print(upload)
 		# Optionally delete the collection if not needed
 		# collection.delete()
-		print(email)
+		print(scraper.request_body.email)
 		print(request_body.model_dump(mode='python'))
 		response = {
 			"message": "Strategy and report generated successfully",
-			"url": f"https://inform.sfo2.cdn.digitaloceanspaces.com/{filename}.pdf",
-			"email": email,
+			"scraper.request_body.url": f"https://inform.sfo2.cdn.digitaloceanspaces.com/{filename}.pdf",
+			"email": scraper.request_body.email,
 			"filename": filename,
 			"company": company_response.name,
 			"status": "success"
 		}
 		requests.post("https://hook.us1.make.com/3lbu58jf6zfd2rvktzkenwiqdghxw2ek", json=response)
-		db.update_sales_scraper_run(run_id=run_id, run_results={"strategy": strategy}, run_status="Success")
+		db.update_sales_scraper_run(run_id=scraper.run_id, run_results={"strategy": strategy}, run_status="Success")
 		os.remove(filename + ".pdf")
 		return response
 	
 	except Exception as e:
-		db.update_sales_scraper_run(run_id=run_id, run_results=str(e), run_status="Error")
+		db.update_sales_scraper_run(run_id=scraper.run_id, run_results=str(e), run_status="Error")
 		response = {
 			"message": str(e),
-			"url": "",
+			"scraper.request_body.url": "",
 			"company": "",
-			"email": email,
+			"email": scraper.request_body.email,
 			"status": "error"
 		}
 		requests.post("https://hook.us1.make.com/3lbu58jf6zfd2rvktzkenwiqdghxw2ek", json=response)

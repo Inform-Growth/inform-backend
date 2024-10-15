@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException, Path, Query
-from app.services.submission_service import SubmissionService
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
+
+from app.services.submission_service import SubmissionService
 
 router = APIRouter()
 

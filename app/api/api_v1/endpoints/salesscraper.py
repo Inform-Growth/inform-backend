@@ -1,16 +1,17 @@
-from typing import Any
-from fastapi import APIRouter, BackgroundTasks
-from app.controllers.scraper_controller import run_scraper
+from typing import Any, Annotated
+from fastapi import APIRouter, BackgroundTasks, Body
 from app.db.supabase_connection import SupabaseConnection
 from app.models.scraper_models import SalesScraperRequestBody
+from app.controllers.scraper_controller import run_scraper
+
 
 router = APIRouter()
 db = SupabaseConnection()
 
-
 @router.post("/", response_model=dict)
-async def handle_sales_scraper_request(request_body: SalesScraperRequestBody,
-                                       background_tasks: BackgroundTasks) -> Any:
+async def handle_sales_scraper_request(
+		request_body: Annotated[SalesScraperRequestBody, Body(..., description="Sales scraper request")],
+		background_tasks: BackgroundTasks):
 	"""
     Handles the sales scraper request, initiating the scraper run and adding the task to background tasks.
 
@@ -21,6 +22,11 @@ async def handle_sales_scraper_request(request_body: SalesScraperRequestBody,
     Returns:
     dict: Contains the run_id and a message regarding the status of the scraper run initiation.
     """
+	# TODO: Delete debug comments
+	print("\n\n\nRequest body:\n")
+	print(request_body.model_dump_json())
+	print("\n\n\n")
+	
 	if request_body is None:
 		print("Request body is empty! No scraper operation will be performed.")
 		return None
@@ -34,8 +40,11 @@ async def handle_sales_scraper_request(request_body: SalesScraperRequestBody,
 	else:
 		print("Error! Run_ID is not valid, so no valid scraper was created.")
 	
+	# TODO: Delete
+	print("\n\n\nAdding background task\n\n\n")
 	# Step 3: Add the long-running scraper task to background tasks
 	background_tasks.add_task(process_scraper_run, run_id, request_body)
+	print("\n\n\nAdded background task\n\n\n")
 	
 	return {"run_id": run_id, "message": "Scraper run has been created and is processing in the background."}
 
@@ -52,8 +61,17 @@ def _create_scraper_run(email: str, description: str, url: str) -> Any | None:
 	Returns:
 	Any | None: The unique identifier of the created scraper run if successful, otherwise None.
 	"""
-	run = db.create_sales_scraper_run(email=email, description=description, url=url)
-	return run["id"]
+	# TODO: Delete debug comments
+	print("\n\n\nCreating database scraper run")
+	database_scraper_run = db.create_sales_scraper_run(email=email, description=description, url=url)
+	print("\n\n\n")
+	
+	if database_scraper_run is not None:
+		print("Database scraper run created!\n\n\n")
+		return database_scraper_run["id"]
+	else:
+		print("Failed to create database scraper run!")
+		return None
 
 
 async def process_scraper_run(database_run_id: str, request_body: SalesScraperRequestBody):
@@ -64,6 +82,9 @@ async def process_scraper_run(database_run_id: str, request_body: SalesScraperRe
 	database_run_id (str): The unique identifier of the scraper run in the database.
 	request_body (SalesScraperRequestBody): The request body containing the necessary details to run the scraper.
 	"""
+	# TODO: Delete
+	print("\n\n\nProcessing scraper run\n\n\n")
+	
 	try:
 		# Step 4: Update the scraper run status to 'Started'
 		db.update_sales_scraper_run(run_id=database_run_id, run_status="Started")

@@ -309,7 +309,7 @@ class SupabaseConnection:
                 'run_errors': run_errors if run_errors is not None else {},
                 'updated_at': current_time
             }
-            response = self.supabase.table('sales_scraper_runs').update(update_data).eq('id', run_id).execute()
+            response = self.supabase.table('sales_scraper_runs').update(update_data).eq("id", run_id).execute()
             return response.data[0]
         except Exception as e:
             print(f"Error updating sales scraper run: {str(e)}")
