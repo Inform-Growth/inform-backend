@@ -77,4 +77,5 @@ async def process_scraper_run(database_run_id: str, request_body: SalesScraperRe
 	except Exception as e:
 		# Step 6: If an error occurs, update the status to 'Error'
 		db.update_sales_scraper_run(run_id=database_run_id, run_results=str(e), run_status="Error")
+		print(f"An error occurred during scraping: {e}")
 		raise e
