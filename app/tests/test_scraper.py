@@ -1,14 +1,17 @@
 import sys
-import asyncio
 from pathlib import Path
-from unittest.mock import patch, AsyncMock, MagicMock
+from unittest.mock import patch, MagicMock
+
 import pytest
+
+from app.controllers.scraper_controller import run_scraper
+from app.models.scraper_models import SalesScraperRequestBody
 
 # Add the project root to the Python path
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 
 # Import the run_scraper function
-from app.scraper import run_scraper
+
 from fastapi import HTTPException
 
 @pytest.mark.asyncio
@@ -18,7 +21,9 @@ async def test_run_scraper_success():
         "url": "https://example.com",
         "email": "test@example.com"
     }
-
+    
+    scraper_request = SalesScraperRequestBody(**args)
+    
     # Mock external dependencies
     with patch('app.scraper.WebRequestHandler') as mock_web_handler, \
          patch('app.scraper.URLRanker') as mock_ranker, \
@@ -59,7 +64,7 @@ async def test_run_scraper_success():
         mock_chat_openai_instance.return_value = '{"name": "Example Company", "description": "We are a tech company.", "mission": "Innovate AI solutions."}'
 
         # Call the run_scraper function
-        response = await run_scraper(args)
+        response = await run_scraper("0",scraper_request)
 
         # Assert the response
         assert response["status"] == "success"
@@ -74,7 +79,9 @@ async def test_run_scraper_failure():
         "url": "https://example.com",
         "email": "test@example.com"
     }
-
+    
+    scraper_request = SalesScraperRequestBody(**args)
+    
     # Mock external dependencies to raise an exception
     with patch('app.scraper.WebRequestHandler') as mock_web_handler, \
          patch('app.scraper.requests.post') as mock_requests_post:
@@ -86,7 +93,7 @@ async def test_run_scraper_failure():
         mock_requests_post.return_value = MagicMock(status_code=200)
 
         with pytest.raises(HTTPException) as exc_info:
-            await run_scraper(args)
+            await run_scraper("0", scraper_request)
 
         assert exc_info.value.status_code == 500
         assert "Test exception" in str(exc_info.value.detail)

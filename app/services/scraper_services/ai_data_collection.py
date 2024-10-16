@@ -1,14 +1,14 @@
 # ai_data_collection.py
-
-from typing import List, Tuple
-import langchain
-from langchain_openai import OpenAIEmbeddings, OpenAI
-from langchain_text_splitters import RecursiveCharacterTextSplitter,HTMLSectionSplitter
-
 from typing import List
+from typing import Tuple
+
 import html2text
-from app.models.scraper_models import CompanySummaryResponse, ContactResponse, StrategyResponse
 from dotenv import load_dotenv
+from langchain_openai import OpenAIEmbeddings, OpenAI
+from langchain_text_splitters import RecursiveCharacterTextSplitter, HTMLSectionSplitter
+
+from app.models.scraper_models import CompanySummaryResponse, ContactResponse, StrategyResponse
+
 load_dotenv()
 
 
