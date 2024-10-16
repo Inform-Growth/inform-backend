@@ -1,5 +1,3 @@
-# Scraper Services that are used in this controller. Part of the Scraper Architecture.
-# Standard and external imports
 import os
 from datetime import datetime
 from typing import LiteralString
@@ -27,7 +25,6 @@ load_dotenv()
 # Initialize S3 and Supabase connections
 s3 = S3Connection()
 db = SupabaseConnection()
-
 
 def format_docs(docs) -> LiteralString:
 	return "\n\n".join(doc.page_content for doc in docs)
@@ -215,8 +212,8 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 			print("Creating vecs client and storing embeddings")
 			# Store embeddings
 			agent.store_embeddings(unique_splits)
-		
 		# End of If-Else
+		
 		# Proceed with the rest of the code using the agent and existing embeddings
 		db.update_sales_scraper_run(run_id=scraper.run_id, run_status="Getting People Info")
 		

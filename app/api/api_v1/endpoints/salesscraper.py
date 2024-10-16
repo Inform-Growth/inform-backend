@@ -1,5 +1,7 @@
 from typing import Any, Annotated
+
 from fastapi import APIRouter, BackgroundTasks, Body
+
 from app.db.supabase_connection import SupabaseConnection
 from app.models.scraper_models import SalesScraperRequestBody
 from app.controllers.scraper_controller import run_scraper

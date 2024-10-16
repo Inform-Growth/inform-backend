@@ -110,7 +110,14 @@ class SalesScraperRequestBody(BaseModel):
     company_description: str = Field(..., description="The description of the company")
     url: str = Field(..., description="The URL to scrape")
     email: str = Field(..., description="The email to scrape")
-
+    
+    def __repr__(self):
+        return (f"SalesScraperRequestBody(company_description='{self.company_description}', "
+                f"url='{self.url}', email='{self.email}')")
+    
+    def __str__(self):
+        return (f"SalesScraperRequestBody with company_description='{self.company_description}', "
+                f"url='{self.url}', and email='{self.email}'")
 
 class Scraper(BaseModel):
     """"
