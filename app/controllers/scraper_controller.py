@@ -265,30 +265,38 @@ async def run_scraper(database_run_id: str, request_body: SalesScraperRequestBod
 		for person in people_response.people:
 			# Check if the person is associated with the company
 			check_query = f"Is {person.name} on the team at {company_response.name}?"
+			print("checking if person is on the team")
 			check_context = agent.retrieve_documents(check_query, filters={"people_likelihood": {"$gt": 0.7}})
+			print(check_context)
 			check_response = agent.ask_question(
 				query=check_query,
 				response_model=CheckResponse,
 				context_docs=check_context
 			)
+			print(check_response)
 			if not check_response or not check_response.check:
 				continue
 			
 			# Get summary of the person
+			print("getting summary of the person")
 			summary_query = f"What does {person.name} do at {company_response.name}?"
 			summary_context = agent.retrieve_documents(summary_query, filters={"people_likelihood": {"$gt": 0.7}})
+			print(summary_context)
 			summary_response = agent.ask_question(
 				query=summary_query,
 				response_model=Summary,
 				context_docs=summary_context
 			)
+			print(summary_response)
 			if summary_response:
 				person.summary = summary_response.summary
 			
 			valid_people.append(person)
 			
 			# Collect appendix URLs from summary context
+			print("collecting appendix urls")
 			for doc in summary_context:
+				print(doc)
 				if 'source' in doc[2] and doc[2]['source'] not in appendix_urls:
 					appendix_urls.append(doc[2]['source'])
 		

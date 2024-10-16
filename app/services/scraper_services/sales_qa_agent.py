@@ -110,9 +110,14 @@ class SalesQAAgent:
         format_instructions = output_parser.get_format_instructions()
 
         # Extract texts from context_docs
-        print(context_docs[0])
-        print(context_docs[0][0])
-        context_texts = [doc[0] for doc in context_docs]
+        print("context_docs")
+        if len(context_docs) > 0:
+            print(context_docs[0])
+            print(context_docs[0][0])
+            context_texts = [doc[0] for doc in context_docs]
+        else:
+            print("context_docs is empty")
+            context_texts = []
 
         # Format the prompt
         prompt = prompt_template.format_messages(

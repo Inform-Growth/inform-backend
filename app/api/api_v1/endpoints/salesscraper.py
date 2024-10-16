@@ -43,8 +43,9 @@ async def handle_sales_scraper_request(
 	# TODO: Delete
 	print("\n\n\nAdding background task\n\n\n")
 	# Step 3: Add the long-running scraper task to background tasks
-	background_tasks.add_task(process_scraper_run, run_id, request_body)
+	# background_tasks.add_task(process_scraper_run, run_id, request_body)
 	print("\n\n\nAdded background task\n\n\n")
+	await process_scraper_run(run_id, request_body)
 	
 	return {"run_id": run_id, "message": "Scraper run has been created and is processing in the background."}
 
