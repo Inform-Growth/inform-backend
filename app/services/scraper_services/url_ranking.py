@@ -1,10 +1,12 @@
 # url_ranking.py
 from typing import List
+
+from dotenv import load_dotenv
 # from langsmith import traceable
 from langchain_openai import ChatOpenAI
-from app.models.scraper_models import PageRanked,RankedPages
-import os
-from dotenv import load_dotenv
+
+from app.models.scraper_models import PageRanked, RankedPages
+
 load_dotenv()
 
 

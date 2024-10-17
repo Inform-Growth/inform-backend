@@ -57,6 +57,7 @@ class MongoEngineConnection:
         except Exception as e:
             print(f"Error fetching submissions: {str(e)}")
             return []
+        
     def get_submission(self, submission_id):
         """
         Retrieve a specific submission by its ID.
