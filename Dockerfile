@@ -1,11 +1,8 @@
 # Start with the Debian Bullseye slim image
 FROM debian:bullseye-slim
 
-# Define a build argument for the platform - If no argument is given, defaults to Linux/MacOS
-ARG PLATFORM
-
-# Print to ensure platform was set
-RUN echo $PLATFORM
+# Define a build argument for the platform
+ARG TARGETPLATFORM=linux/amd64
 
 # Set environment variables
 ENV PATH /usr/local/bin:$PATH
@@ -18,7 +15,6 @@ ENV APP_HOME /app
 RUN mkdir -p $APP_HOME && \
     chown -R nobody:nogroup $APP_HOME && \
     chmod -R 755 $APP_HOME
-
 
 # Create a directory for temporary PDF storage
 RUN mkdir -p $APP_HOME/tmp && \
@@ -135,9 +131,16 @@ RUN set -eux; \
 
 RUN echo $BUILD_PLATFORM
 
-# Install dependencies
-COPY ${PLATFORM}_requirements.txt requirements.txt
-RUN pip install --no-cache-dir --no-deps -r requirements.txt
+# Determine the platform and set the requirements file
+RUN if [ "$TARGETPLATFORM" = "windows/amd64" ]; then \
+        echo "windows_requirements.txt" > requirements_file.txt; \
+    else \
+        echo "linux_requirements.txt" > requirements_file.txt; \
+    fi
+
+# Install dependencies based on the platform
+COPY linux_requirements.txt windows_requirements.txt ./
+RUN pip install --no-cache-dir --no-deps -r $(cat requirements_file.txt)
 
 # Copy the rest of the application
 COPY . .
